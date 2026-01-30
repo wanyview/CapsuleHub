@@ -3,8 +3,9 @@
 """
 import json
 import os
+import random
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from .capsule import KnowledgeCapsule, CapsuleCreate
 from .evaluator import datm_evaluator
@@ -41,6 +42,19 @@ class CapsuleStorage:
                 metric_type TEXT,
                 value REAL,
                 created_at TEXT,
+                FOREIGN KEY (capsule_id) REFERENCES capsules(id)
+            )
+        """)
+        
+        # 精选胶囊表
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS featured_capsules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                capsule_id TEXT NOT NULL,
+                featured_date TEXT NOT NULL,
+                reason TEXT,
+                created_at TEXT,
+                UNIQUE(capsule_id, featured_date),
                 FOREIGN KEY (capsule_id) REFERENCES capsules(id)
             )
         """)
@@ -140,6 +154,146 @@ class CapsuleStorage:
         conn.close()
         return capsules
     
+    def get_todays_featured(self) -> Optional[KnowledgeCapsule]:
+        """获取今日精选胶囊"""
+        import sqlite3
+        from .capsule import KnowledgeCapsule
+        
+        today = datetime.utcnow().strftime("%Y-%m-%d")
+        
+        conn = sqlite3.connect(str(self.db_path))
+        cursor = conn.cursor()
+        
+        # 先检查是否有今日精选
+        cursor.execute("""
+            SELECT c.data FROM capsules c
+            JOIN featured_capsules f ON c.id = f.capsule_id
+            WHERE f.featured_date = ?
+            ORDER BY f.created_at DESC LIMIT 1
+        """, (today,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return KnowledgeCapsule.model_validate_json(row[0])
+        
+        return None
+    
+    def get_yesterdays_featured(self) -> Optional[KnowledgeCapsule]:
+        """获取昨日精选胶囊"""
+        import sqlite3
+        from .capsule import KnowledgeCapsule
+        
+        yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+        
+        conn = sqlite3.connect(str(self.db_path))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT c.data FROM capsules c
+            JOIN featured_capsules f ON c.id = f.capsule_id
+            WHERE f.featured_date = ?
+            ORDER BY f.created_at DESC LIMIT 1
+        """, (yesterday,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return KnowledgeCapsule.model_validate_json(row[0])
+        
+        return None
+    
+    def auto_select_featured(self, date: Optional[str] = None) -> Optional[KnowledgeCapsule]:
+        """自动选择今日/指定日期的精选胶囊（基于评分 + 随机）"""
+        import sqlite3
+        from .capsule import KnowledgeCapsule
+        
+        target_date = date or datetime.utcnow().strftime("%Y-%m-%d")
+        
+        conn = sqlite3.connect(str(self.db_path))
+        cursor = conn.cursor()
+        
+        # 获取所有胶囊，按评分排序
+        cursor.execute("""
+            SELECT data, overall_score FROM capsules
+            ORDER BY overall_score DESC
+        """)
+        
+        rows = cursor.fetchall()
+        conn.close()
+        
+        if not rows:
+            return None
+        
+        # 策略：选择 Top 3 中随机一个，避免总是同样的
+        top_candidates = rows[:3]
+        selected = random.choice(top_candidates)
+        
+        capsule = KnowledgeCapsule.model_validate_json(selected[0])
+        
+        # 设置为精选
+        self.set_featured(capsule.id, target_date, reason="自动选择 - 高评分")
+        
+        return capsule
+    
+    def set_featured(self, capsule_id: str, date: str, reason: str = ""):
+        """手动设置精选胶囊"""
+        import sqlite3
+        
+        conn = sqlite3.connect(str(self.db_path))
+        cursor = conn.cursor()
+        
+        # 使用 REPLACE 实现 upsert
+        cursor.execute("""
+            INSERT OR REPLACE INTO featured_capsules (capsule_id, featured_date, reason, created_at)
+            VALUES (?, ?, ?, ?)
+        """, (capsule_id, date, reason, datetime.utcnow().isoformat()))
+        
+        conn.commit()
+        conn.close()
+    
+    def get_featured_history(self, days: int = 7) -> List[Dict[str, Any]]:
+        """获取精选历史"""
+        import sqlite3
+        
+        history = []
+        for i in range(days):
+            date = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
+            capsule = self.get_featured_by_date(date)
+            if capsule:
+                history.append({
+                    "date": date,
+                    "capsule": capsule,
+                    "grade": capsule.overall_grade,
+                    "score": capsule.overall_score
+                })
+        
+        return history
+    
+    def get_featured_by_date(self, date: str) -> Optional[KnowledgeCapsule]:
+        """获取指定日期的精选胶囊"""
+        import sqlite3
+        from .capsule import KnowledgeCapsule
+        
+        conn = sqlite3.connect(str(self.db_path))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT c.data FROM capsules c
+            JOIN featured_capsules f ON c.id = f.capsule_id
+            WHERE f.featured_date = ?
+            LIMIT 1
+        """, (date,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return KnowledgeCapsule.model_validate_json(row[0])
+        return None
+    
     def search(
         self,
         query: Optional[str] = None,
@@ -185,6 +339,18 @@ class CapsuleStorage:
             results.append(capsule)
         
         return results[:limit]
+    
+    def get_trending(self, days: int = 7, limit: int = 10) -> List[KnowledgeCapsule]:
+        """获取近期热门胶囊（基于创建时间和评分）"""
+        from .capsule import KnowledgeCapsule
+        
+        # 获取最近创建的胶囊
+        capsules = self.list(limit=50)
+        
+        # 按评分排序
+        sorted_capsules = sorted(capsules, key=lambda x: x.overall_score, reverse=True)
+        
+        return sorted_capsules[:limit]
     
     def update_metrics(self, capsule_id: str, metric_type: str, value: float):
         """更新指标"""

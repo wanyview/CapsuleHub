@@ -121,3 +121,89 @@ async def get_trending_capsules(limit: int = 10):
     capsules = storage.list(limit=100)
     sorted_capsules = sorted(capsules, key=lambda x: x.impact_score, reverse=True)
     return {"capsules": sorted_capsules[:limit]}
+
+
+# ========== 今日/昨日精选 ==========
+
+@router.get("/featured/today")
+async def get_todays_featured():
+    """获取今日精选胶囊"""
+    capsule = storage.get_todays_featured()
+    if not capsule:
+        # 自动选择
+        capsule = storage.auto_select_featured()
+        if not capsule:
+            raise HTTPException(status_code=404, detail="No capsules available")
+    
+    score_breakdown = datm_evaluator.get_score_breakdown(capsule)
+    return CapsuleResponse(
+        capsule=capsule,
+        score_breakdown=score_breakdown
+    )
+
+
+@router.get("/featured/yesterday")
+async def get_yesterdays_featured():
+    """获取昨日精选胶囊"""
+    capsule = storage.get_yesterdays_featured()
+    if not capsule:
+        raise HTTPException(status_code=404, detail="No featured capsule for yesterday")
+    
+    score_breakdown = datm_evaluator.get_score_breakdown(capsule)
+    return CapsuleResponse(
+        capsule=capsule,
+        score_breakdown=score_breakdown
+    )
+
+
+@router.get("/featured/{date}")
+async def get_featured_by_date(date: str):
+    """获取指定日期的精选胶囊"""
+    capsule = storage.get_featured_by_date(date)
+    if not capsule:
+        raise HTTPException(status_code=404, detail=f"No featured capsule for {date}")
+    
+    score_breakdown = datm_evaluator.get_score_breakdown(capsule)
+    return CapsuleResponse(
+        capsule=capsule,
+        score_breakdown=score_breakdown
+    )
+
+
+@router.get("/featured/history")
+async def get_featured_history(days: int = 7):
+    """获取精选历史"""
+    history = storage.get_featured_history(days=days)
+    return {
+        "history": history,
+        "count": len(history)
+    }
+
+
+@router.post("/featured/")
+async def set_featured(capsule_id: str, date: str, reason: str = ""):
+    """手动设置精选胶囊"""
+    capsule = storage.get(capsule_id)
+    if not capsule:
+        raise HTTPException(status_code=404, detail="Capsule not found")
+    
+    storage.set_featured(capsule_id, date, reason)
+    return {
+        "status": "success",
+        "message": f"Capsule {capsule_id} set as featured for {date}",
+        "capsule": capsule
+    }
+
+
+@router.post("/featured/auto-select")
+async def auto_select_featured(date: Optional[str] = None):
+    """自动选择精选胶囊"""
+    capsule = storage.auto_select_featured(date)
+    if not capsule:
+        raise HTTPException(status_code=404, detail="No capsules available")
+    
+    return {
+        "status": "success",
+        "message": f"Auto-selected capsule for {date or 'today'}",
+        "capsule": capsule
+    }

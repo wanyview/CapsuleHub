@@ -3,6 +3,7 @@ Knowledge Capsule Hub - FastAPI 主应用
 """
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 
@@ -28,6 +29,11 @@ app.add_middleware(
 # 挂载 API 路由
 app.include_router(capsules_router)
 
+# 挂载静态文件
+ui_path = Path(__file__).parent / "ui"
+if ui_path.exists():
+    app.mount("/static", StaticFiles(directory=str(ui_path)), name="static")
+
 
 # 简单的健康检查
 @app.get("/health")
@@ -35,9 +41,25 @@ async def health():
     return {"status": "ok", "service": "knowledge-capsule-hub"}
 
 
-# API 信息
+# UI 页面
 @app.get("/")
-async def root():
+async def index():
+    """主页"""
+    index_file = Path(__file__).parent / "ui" / "index.html"
+    if index_file.exists():
+        return FileResponse(str(index_file))
+    return {
+        "service": "Knowledge Capsule Hub",
+        "version": "0.1.0",
+        "description": "AI 时代的知识资产交易所",
+        "ui": "UI not found, run 'python scripts/init_demo.py' first",
+        "docs": "/docs"
+    }
+
+
+# API 信息
+@app.get("/info")
+async def info():
     return {
         "service": "Knowledge Capsule Hub",
         "version": "0.1.0",
