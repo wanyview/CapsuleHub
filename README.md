@@ -17,6 +17,7 @@
 - 📦 **知识胶囊** - 结构化的知识单元
 - 🏆 **DATM 评分** - Truth / Goodness / Beauty / Intelligence
 - 🔍 **语义搜索** - 快速发现相关胶囊
+- 🌟 **今日/昨日精选** - 每日自动推荐高质量胶囊
 - 📊 **价值追踪** - 引用统计、效果验证
 - 🔗 **开放集成** - API 服务、外部系统集成
 
@@ -37,7 +38,25 @@ python scripts/init_demo.py
 python -m uvicorn app.main:app --reload
 ```
 
-访问 http://localhost:8000/docs 查看 API 文档。
+访问 http://localhost:8000 查看主页，访问 http://localhost:8000/docs 查看 API 文档。
+
+## 🌟 今日/昨日精选
+
+CapsuleHub 每天会自动选择高质量的胶囊进行推荐：
+
+- **今日精选** - 每天 00:00 自动选择 Top 3 中随机一个
+- **昨日精选** - 查看昨天的推荐内容
+- **精选历史** - 查看最近 7 天的精选记录
+- **手动设置** - 可手动指定精选胶囊
+
+```bash
+# API 端点
+GET /api/capsules/featured/today       # 今日精选
+GET /api/capsules/featured/yesterday   # 昨日精选
+GET /api/capsules/featured/2026-01-30  # 指定日期精选
+GET /api/capsules/featured/history     # 精选历史
+POST /api/capsules/featured/           # 手动设置精选
+```
 
 ## 📦 核心概念
 
@@ -133,10 +152,11 @@ CapsuleHub/
 - [x] 基本的发布/搜索 API
 - [x] DATM 质量评估
 
-### v0.2 - 质量系统 (Week 2)
-- [ ] 评分可视化
-- [ ] 排行榜
-- [ ] 社区反馈
+### v0.2 - 精选系统 ✅ (本周)
+- [x] 今日/昨日精选胶囊
+- [x] 自动选择算法
+- [x] 精选历史记录
+- [ ] 前端 UI 展示
 
 ### v0.3 - 价值追踪 (Week 3)
 - [ ] 引用追踪
