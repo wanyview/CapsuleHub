@@ -14,7 +14,7 @@ from .api.capsules import router as capsules_router
 app = FastAPI(
     title="Knowledge Capsule Hub",
     description="AI 时代的知识资产交易所",
-    version="0.1.0"
+    version="0.2.0"
 )
 
 # CORS
@@ -28,6 +28,13 @@ app.add_middleware(
 
 # 挂载 API 路由
 app.include_router(capsules_router)
+
+# 挂载溯源 API
+try:
+    from .api.provenance import router as provenance_router
+    app.include_router(provenance_router, prefix="/api/capsules")
+except ImportError:
+    pass  # 溯源模块可能还未加载
 
 # 挂载静态文件
 ui_path = Path(__file__).parent / "ui"
@@ -62,15 +69,33 @@ async def index():
 async def info():
     return {
         "service": "Knowledge Capsule Hub",
-        "version": "0.1.0",
-        "description": "AI 时代的知识资产交易所",
+        "version": "0.2.0",
+        "description": "AI 时代的知识资产交易所 - 知识胶囊溯源系统",
         "docs": "/docs",
+        "features": [
+            "知识胶囊管理",
+            "DATM 质量评估",
+            "今日/昨日精选",
+            "胶囊溯源系统",  # 新功能
+            "版本演进追踪",
+            "知识图谱可视化"
+        ],
         "endpoints": {
+            # 胶囊基础
             "capsules": "/api/capsules/",
             "search": "/api/capsules/search/",
             "domains": "/api/capsules/domains/",
             "topics": "/api/capsules/topics/",
-            "trending": "/api/capsules/trending/"
+            "trending": "/api/capsules/trending/",
+            # 精选功能
+            "featured_today": "/api/capsules/featured/today",
+            "featured_yesterday": "/api/capsules/featured/yesterday",
+            "featured_history": "/api/capsules/featured/history",
+            # 溯源系统 (新)
+            "provenance": "/api/capsules/{id}/provenance",
+            "versions": "/api/capsules/{id}/versions",
+            "evolution": "/api/capsules/{id}/evolution",
+            "knowledge_graph": "/api/capsules/graph/overview"
         }
     }
 

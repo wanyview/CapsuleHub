@@ -82,6 +82,27 @@
             line-height: 1.6;
             margin: 12px 0;
         }
+        
+        /* 溯源信息样式 */
+        .provenance {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.85em;
+        }
+        .provenance-title {
+            color: #64ffda;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .provenance-item {
+            display: flex;
+            gap: 10px;
+            margin: 4px 0;
+            color: #8892b0;
+        }
+        .provenance-label { color: #64ffda; }
+        
         .capsule-actions {
             display: flex;
             gap: 10px;
@@ -223,7 +244,10 @@
                     insight: '量子纠缠展示了一种超越经典物理的瞬时关联，测量一个粒子会瞬时影响另一个纠缠粒子的状态',
                     overall_grade: 'A',
                     overall_score: 85,
-                    authors: ['爱因斯坦', '玻尔', '贝尔']
+                    authors: ['爱因斯坦', '玻尔', '贝尔'],
+                    version: '1.0.0',
+                    source_type: 'discussion',
+                    citations: 5
                 },
                 {
                     id: '2',
@@ -233,7 +257,10 @@
                     insight: "Transformer 的自注意力机制让模型能够在处理序列时动态地关注不同位置的信息",
                     overall_grade: 'A',
                     overall_score: 88,
-                    authors: ['Vaswani', 'Shazeer']
+                    authors: ['Vaswani', 'Shazeer'],
+                    version: '1.0.0',
+                    source_type: 'discussion',
+                    citations: 12
                 },
                 {
                     id: '3',
@@ -243,7 +270,10 @@
                     insight: '气候变化通过温度升高、降水模式改变和极端天气，影响全球农业生产的稳定性和产量',
                     overall_grade: 'B',
                     overall_score: 78,
-                    authors: ['IPCC专家组']
+                    authors: ['IPCC专家组'],
+                    version: '1.0.0',
+                    source_type: 'discussion',
+                    citations: 3
                 }
             ];
         }
@@ -260,10 +290,28 @@
                         <span>📚 ${c.domain}</span>
                         <span>👥 ${c.authors.join(', ')}</span>
                         <span>⭐ ${c.overall_score.toFixed(1)}分</span>
+                        ${c.version ? `<span>📦 v${c.version}</span>` : ''}
                     </div>
                     <div class="capsule-insight">${c.insight}</div>
+                    
+                    <!-- 溯源信息 -->
+                    <div class="provenance">
+                        <div class="provenance-title">🔗 溯源信息</div>
+                        <div class="provenance-item">
+                            <span class="provenance-label">来源:</span>
+                            <span>${c.source_type || 'manual'}</span>
+                        </div>
+                        ${c.citations > 0 ? `
+                        <div class="provenance-item">
+                            <span class="provenance-label">引用:</span>
+                            <span>${c.citations} 次</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
                     <div class="capsule-actions">
                         <button class="btn btn-primary" onclick="viewCapsule('${c.id}')">查看详情</button>
+                        <button class="btn btn-secondary" onclick="citeCapsule('${c.id}')">📎 引用</button>
                         <button class="btn btn-secondary">⭐ 收藏</button>
                     </div>
                 </div>
@@ -303,6 +351,19 @@
         
         function viewCapsule(id) {
             window.location.href = `/api/capsules/${id}`;
+        }
+        
+        async function citeCapsule(id) {
+            try {
+                const response = await fetch(`/api/capsules/${id}/cite`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                alert(`引用成功！当前引用次数: ${data.new_count}`);
+                loadCapsules(); // 刷新列表
+            } catch (e) {
+                alert('引用失败');
+            }
         }
         
         loadCapsules();
