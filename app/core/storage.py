@@ -7,7 +7,7 @@ import random
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from pathlib import Path
-from .capsule import KnowledgeCapsule, CapsuleCreate
+from .capsule import KnowledgeCapsule, CapsuleCreate, DATMScore
 from .evaluator import datm_evaluator
 
 
@@ -80,23 +80,7 @@ class CapsuleStorage:
             source_id=capsule_data.source_id,
             authors=capsule_data.authors,
             license=capsule_data.license,
-            datm_score=datm_evaluator.evaluate(
-                KnowledgeCapsule(
-                    title=capsule_data.title,
-                    domain=capsule_data.domain,
-                    topics=capsule_data.topics,
-                    insight=capsule_data.insight,
-                    evidence=capsule_data.evidence,
-                    action_items=capsule_data.action_items,
-                    applicability=capsule_data.applicability,
-                    limitations=capsule_data.limitations,
-                    source_type=capsule_data.source_type,
-                    source_id=capsule_data.source_id,
-                    authors=capsule_data.authors,
-                    license=capsule_data.license,
-                    confidence=0.7  # 默认置信度
-                )
-            ),
+            datm_score=DATMScore(truth=75, goodness=75, beauty=75, intelligence=75),
             confidence=0.7  # 默认置信度
         )
         
