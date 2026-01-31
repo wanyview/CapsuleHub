@@ -207,3 +207,90 @@ async def auto_select_featured(date: Optional[str] = None):
         "message": f"Auto-selected capsule for {date or 'today'}",
         "capsule": capsule
     }
+
+
+# ========== 精选统计 ==========
+
+@router.get("/featured/stats")
+async def get_featured_stats():
+    """获取精选统计信息"""
+    history = storage.get_featured_history(days=30)
+    
+    if not history:
+        return {
+            "total_featured": 0,
+            "domains": {},
+            "avg_score": 0,
+            "top_grade": "N/A"
+        }
+    
+    # 统计
+    total = len(history)
+    domains = {}
+    total_score = 0
+    
+    for item in history:
+        c = item["capsule"]
+        d = c.domain
+        domains[d] = domains.get(d, 0) + 1
+        total_score += c.overall_score
+    
+    avg_score = total_score / total if total > 0 else 0
+    
+    # 评分分布
+    grade_dist = {"A": 0, "B": 0, "C": 0, "D": 0}
+    for item in history:
+        grade = item["capsule"].overall_grade
+        if grade in grade_dist:
+            grade_dist[grade] += 1
+    
+    return {
+        "total_featured": total,
+        "domains": domains,
+        "avg_score": round(avg_score, 1),
+        "grade_distribution": grade_dist,
+        "last_updated": history[0]["date"] if history else None
+    }
+
+
+@router.get("/featured/random")
+async def get_random_featured(limit: int = 3):
+    """随机获取精选胶囊（用于展示）"""
+    history = storage.get_featured_history(days=30)
+    
+    if not history:
+        raise HTTPException(status_code=404, detail="No featured capsules")
+    
+    import random
+    selected = random.sample(history, min(limit, len(history)))
+    
+    capsules = []
+    for item in selected:
+        c = item["capsule"]
+        capsules.append({
+            **c.model_dump(),
+            "featured_date": item["date"],
+            "reason": item.get("reason", "")
+        })
+    
+    return {"capsules": capsules, "count": len(capsules)}
+
+
+# ========== 胶囊对比 ==========
+
+@router.post("/compare")
+async def compare_capsules(capsule_ids: List[str]):
+    """对比多个胶囊"""
+    capsules = []
+    for cid in capsule_ids:
+        c = storage.get(cid)
+        if c:
+            capsules.append({
+                "capsule": c,
+                "score_breakdown": datm_evaluator.get_score_breakdown(c)
+            })
+    
+    return {
+        "capsules": capsules,
+        "count": len(capsules)
+    }

@@ -37,6 +37,73 @@
         .section { margin-bottom: 40px; }
         .section h2 { margin-bottom: 20px; font-size: 1.5em; }
         
+        /* 精选胶囊样式 */
+        .featured-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+        .featured-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .featured-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #64ffda 0%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .featured-insight {
+            font-size: 1.1em;
+            line-height: 1.8;
+            color: #ccd6f6;
+            margin: 16px 0;
+            padding: 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .featured-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+            font-size: 0.9em;
+            color: #8892b0;
+        }
+        .featured-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        /* 评分进度条 */
+        .score-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .score-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .score-A { background: linear-gradient(90deg, #10b981, #34d399); }
+        .score-B { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .score-C { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .score-D { background: linear-gradient(90deg, #ef4444, #f87171); }
+        
         .capsules {
             display: grid;
             gap: 20px;
@@ -186,6 +253,27 @@
             </div>
         </header>
         
+        <!-- 今日精选胶囊 -->
+        <div class="featured-card" id="featuredSection" style="display: none;">
+            <div class="featured-badge">⭐ 今日精选</div>
+            <div class="featured-title" id="featuredTitle"></div>
+            <div class="featured-insight" id="featuredInsight"></div>
+            <div class="featured-meta" id="featuredMeta"></div>
+            <div style="margin-top: 16px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #8892b0;">
+                    <span>综合评分</span>
+                    <span id="featuredScore"></span>
+                </div>
+                <div class="score-bar">
+                    <div class="score-fill" id="featuredScoreBar"></div>
+                </div>
+            </div>
+            <div class="capsule-actions">
+                <button class="btn btn-primary" onclick="viewFeatured()">查看详情</button>
+                <button class="btn btn-secondary" onclick="citeFeatured()">📎 引用</button>
+            </div>
+        </div>
+        
         <div class="search-bar">
             <input type="text" class="search-input" placeholder="🔍 搜索知识胶囊..." id="searchInput">
             <button class="btn btn-primary" onclick="search()">搜索</button>
@@ -231,6 +319,61 @@
                 console.log('API not available, using demo data');
                 capsules = getDemoCapsules();
                 renderCapsules(capsules);
+            }
+        }
+        
+        async function loadFeatured() {
+            try {
+                const response = await fetch('/api/capsules/featured/today');
+                if (response.ok) {
+                    const data = await response.json();
+                    renderFeatured(data.capsule);
+                }
+            } catch (e) {
+                console.log('Featured capsule not available');
+            }
+        }
+        
+        function renderFeatured(capsule) {
+            if (!capsule) return;
+            
+            const section = document.getElementById('featuredSection');
+            section.style.display = 'block';
+            
+            document.getElementById('featuredTitle').textContent = capsule.title;
+            document.getElementById('featuredInsight').textContent = capsule.insight;
+            document.getElementById('featuredMeta').innerHTML = `
+                <span>📚 ${capsule.domain}</span>
+                <span>👥 ${capsule.authors.join(', ')}</span>
+                <span>⭐ ${capsule.overall_score}分</span>
+                ${capsule.version ? `<span>📦 v${capsule.version}</span>` : ''}
+            `;
+            
+            document.getElementById('featuredScore').textContent = `${capsule.overall_score}/100`;
+            document.getElementById('featuredScoreBar').style.width = `${capsule.overall_score}%`;
+            document.getElementById('featuredScoreBar').className = `score-fill score-${capsule.overall_grade}`;
+            
+            // 保存当前精选胶囊 ID
+            window.currentFeaturedId = capsule.id;
+        }
+        
+        function viewFeatured() {
+            if (window.currentFeaturedId) {
+                window.location.href = `/api/capsules/${window.currentFeaturedId}`;
+            }
+        }
+        
+        async function citeFeatured() {
+            if (!window.currentFeaturedId) return;
+            
+            try {
+                const response = await fetch(`/api/capsules/${window.currentFeaturedId}/cite`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                alert(`引用成功！当前引用次数: ${data.new_count}`);
+            } catch (e) {
+                alert('引用失败');
             }
         }
         
@@ -367,6 +510,7 @@
         }
         
         loadCapsules();
+        loadFeatured();
     </script>
 </body>
 </html>
