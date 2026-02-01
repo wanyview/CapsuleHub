@@ -30,6 +30,12 @@ class KnowledgeCapsule(BaseModel):
     domain: str = Field(..., description="学科领域 (physics/AI/biology...)")
     topics: List[str] = Field(default_factory=list, description="主题标签")
     
+    # ========== 胶囊类型 (2026-01-31 新增) ==========
+    capsule_type: str = Field(
+        default="general",
+        description="胶囊类型: general/discussion/historical_replication/fusion/breakthrough"
+    )
+    
     # ========== 核心内容 ==========
     insight: str = Field(..., description="核心洞见（一句话总结）")
     evidence: List[str] = Field(..., min_items=1, description="支撑证据（3-5条）")
@@ -91,6 +97,7 @@ class CapsuleCreate(BaseModel):
     title: str
     domain: str
     topics: List[str] = []
+    capsule_type: str = "general"  # 2026-01-31 新增
     insight: str
     evidence: List[str]
     action_items: List[str] = []
@@ -111,3 +118,48 @@ class CapsuleSearch(BaseModel):
     min_grade: Optional[str] = None  # A/B/C/D
     limit: int = 20
     offset: int = 0
+
+
+# ============ 历史复现胶囊扩展 (2026-01-31 新增) ============
+
+class OriginalExperiment(BaseModel):
+    """原始实验"""
+    researcher: str = Field(..., description="原始研究者")
+    year: int = Field(..., description="实验年份")
+    description: str = Field(..., description="实验描述")
+    original_goal: str = Field(..., description="原始目的")
+    methods: List[str] = Field(default_factory=list, description="实验方法")
+    findings: List[str] = Field(default_factory=list, description="原始发现")
+
+
+class ReplicationExperiment(BaseModel):
+    """复现实验"""
+    researcher: str = Field(..., description="复现研究者")
+    year: int = Field(..., description="复现年份")
+    replication_details: str = Field(..., description="复现过程")
+    deviations: List[str] = Field(default_factory=list, description="与原实验的差异")
+    modern_tools: List[str] = Field(default_factory=list, description="现代工具")
+
+
+class NewDiscovery(BaseModel):
+    """新发现"""
+    phenomena: List[str] = Field(default_factory=list, description="新现象")
+    mechanism: str = Field(default="", description="新机制解释")
+    implications: List[str] = Field(default_factory=list, description="意义")
+    applications: List[str] = Field(default_factory=list, description="潜在应用")
+
+
+class Connection(BaseModel):
+    """连接分析"""
+    temporal_span: int = Field(..., description="时间跨度（年）")
+    domain_bridge: str = Field(..., description="领域桥梁")
+    paradigm_shift: str = Field(default="", description="范式转变")
+    knowledge_gap: str = Field(default="", description="为何原始研究者未发现")
+
+
+class HistoricalReplicationCapsule(BaseModel):
+    """历史复现知识胶囊扩展数据"""
+    original_experiment: OriginalExperiment
+    replication_experiment: ReplicationExperiment
+    new_discovery: NewDiscovery
+    connection: Connection

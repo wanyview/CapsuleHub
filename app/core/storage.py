@@ -66,6 +66,15 @@ class CapsuleStorage:
         """创建胶囊"""
         import sqlite3
         
+        # 获取 datm_score 和 confidence（如果存在）
+        datm = getattr(capsule_data, 'datm_score', None)
+        conf = getattr(capsule_data, 'confidence', 0.7)
+        
+        if datm and isinstance(datm, dict):
+            datm_score = DATMScore(**datm)
+        else:
+            datm_score = DATMScore(truth=75, goodness=75, beauty=75, intelligence=75)
+        
         # 构建胶囊对象
         capsule = KnowledgeCapsule(
             title=capsule_data.title,
@@ -80,8 +89,9 @@ class CapsuleStorage:
             source_id=capsule_data.source_id,
             authors=capsule_data.authors,
             license=capsule_data.license,
-            datm_score=DATMScore(truth=75, goodness=75, beauty=75, intelligence=75),
-            confidence=0.7  # 默认置信度
+            capsule_type=getattr(capsule_data, 'capsule_type', 'general'),
+            datm_score=datm_score,
+            confidence=conf
         )
         
         # 存储到数据库
@@ -350,6 +360,42 @@ class CapsuleStorage:
         
         conn.commit()
         conn.close()
+    
+    def update(self, capsule_id: str, capsule: KnowledgeCapsule) -> bool:
+        """更新胶囊"""
+        import sqlite3
+        
+        # 更新 updated_at
+        capsule.updated_at = datetime.utcnow()
+        
+        conn = sqlite3.connect(str(self.db_path))
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            "UPDATE capsules SET data = ?, updated_at = ? WHERE id = ?",
+            (capsule.model_dump_json(), capsule.updated_at.isoformat(), capsule_id)
+        )
+        
+        affected = cursor.rowcount
+        conn.commit()
+        conn.close()
+        
+        return affected > 0
+    
+    def delete(self, capsule_id: str) -> bool:
+        """删除胶囊"""
+        import sqlite3
+        
+        conn = sqlite3.connect(str(self.db_path))
+        cursor = conn.cursor()
+        
+        cursor.execute("DELETE FROM capsules WHERE id = ?", (capsule_id,))
+        affected = cursor.rowcount
+        
+        conn.commit()
+        conn.close()
+        
+        return affected > 0
 
 
 # 单例存储

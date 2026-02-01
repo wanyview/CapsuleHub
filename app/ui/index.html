@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CapsuleHub - 知识资产交易所</title>
+    <title>CapsuleHub v0.3.0 - 知识资产交易所</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -13,7 +13,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1400px; margin: 0 auto; }
         
         header {
             text-align: center;
@@ -23,6 +23,16 @@
         }
         h1 { font-size: 2.5em; margin-bottom: 10px; }
         .tagline { color: #8892b0; font-size: 1.2em; }
+        .version-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #64ffda 0%, #667eea 100%);
+            color: #1a1a2e;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
         
         .stats {
             display: flex;
@@ -37,7 +47,6 @@
         .section { margin-bottom: 40px; }
         .section h2 { margin-bottom: 20px; font-size: 1.5em; }
         
-        /* 精选胶囊样式 */
         .featured-card {
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
             border: 2px solid rgba(102, 126, 234, 0.5);
@@ -86,7 +95,6 @@
             gap: 6px;
         }
         
-        /* 评分进度条 */
         .score-bar {
             height: 8px;
             background: rgba(255,255,255,0.1);
@@ -139,7 +147,8 @@
         
         .capsule-meta {
             display: flex;
-            gap: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
             margin: 12px 0;
             font-size: 0.85em;
             color: #8892b0;
@@ -150,28 +159,69 @@
             margin: 12px 0;
         }
         
-        /* 溯源信息样式 */
-        .provenance {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.85em;
+        .provenance-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            border: 1px solid rgba(100, 255, 218, 0.2);
         }
         .provenance-title {
             color: #64ffda;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 16px;
+            font-size: 1.1em;
+        }
+        .provenance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
         }
         .provenance-item {
-            display: flex;
-            gap: 10px;
-            margin: 4px 0;
-            color: #8892b0;
+            background: rgba(255,255,255,0.05);
+            padding: 12px;
+            border-radius: 8px;
         }
-        .provenance-label { color: #64ffda; }
+        .provenance-label {
+            color: #8892b0;
+            font-size: 0.8em;
+            margin-bottom: 4px;
+        }
+        .provenance-value {
+            color: #fff;
+            font-weight: 500;
+        }
+        
+        .version-timeline {
+            margin-top: 12px;
+            padding-left: 20px;
+            border-left: 2px solid rgba(100, 255, 218, 0.3);
+        }
+        .version-item {
+            position: relative;
+            padding: 6px 0 6px 16px;
+            font-size: 0.9em;
+        }
+        .version-item::before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 12px;
+            width: 10px;
+            height: 10px;
+            background: #64ffda;
+            border-radius: 50%;
+        }
+        .version-current {
+            background: rgba(100, 255, 218, 0.1);
+            border-radius: 4px;
+            padding: 6px 12px;
+            margin-left: -12px;
+        }
         
         .capsule-actions {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin-top: 16px;
         }
@@ -219,6 +269,7 @@
             border-radius: 20px;
             background: rgba(255,255,255,0.1);
             font-size: 0.85em;
+            cursor: pointer;
         }
         .domain-tag.active { background: #64ffda; color: #1a1a2e; }
         
@@ -234,31 +285,40 @@
 <body>
     <div class="container">
         <header>
-            <h1>💎 CapsuleHub</h1>
-            <p class="tagline">AI 时代的知识资产交易所</p>
+            <h1>CapsuleHub <span class="version-badge">v0.3.0</span></h1>
+            <p class="tagline">AI 时代的知识资产交易所 - 胶囊溯源系统</p>
             
             <div class="stats">
                 <div class="stat">
-                    <div class="stat-num" id="capsuleCount">3</div>
+                    <div class="stat-num" id="capsuleCount">0</div>
                     <div class="stat-label">知识胶囊</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-num">26</div>
-                    <div class="stat-label">学科领域</div>
+                    <div class="stat-num" id="provenanceCount">0</div>
+                    <div class="stat-label">已溯源</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-num" id="avgScore">75</div>
+                    <div class="stat-num" id="totalCitations">0</div>
+                    <div class="stat-label">总引用</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-num" id="avgScore">0</div>
                     <div class="stat-label">平均评分</div>
                 </div>
             </div>
         </header>
         
-        <!-- 今日精选胶囊 -->
         <div class="featured-card" id="featuredSection" style="display: none;">
-            <div class="featured-badge">⭐ 今日精选</div>
+            <div class="featured-badge">今日精选</div>
             <div class="featured-title" id="featuredTitle"></div>
             <div class="featured-insight" id="featuredInsight"></div>
             <div class="featured-meta" id="featuredMeta"></div>
+            
+            <div class="provenance-panel" id="featuredProvenance">
+                <div class="provenance-title">溯源信息 v0.3.0</div>
+                <div class="provenance-grid" id="featuredProvenanceGrid"></div>
+            </div>
+            
             <div style="margin-top: 16px;">
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em; color: #8892b0;">
                     <span>综合评分</span>
@@ -270,44 +330,43 @@
             </div>
             <div class="capsule-actions">
                 <button class="btn btn-primary" onclick="viewFeatured()">查看详情</button>
-                <button class="btn btn-secondary" onclick="citeFeatured()">📎 引用</button>
+                <button class="btn btn-secondary" onclick="citeFeatured()">引用</button>
+                <button class="btn btn-secondary" onclick="registerProvenance()">注册溯源</button>
             </div>
         </div>
         
         <div class="search-bar">
-            <input type="text" class="search-input" placeholder="🔍 搜索知识胶囊..." id="searchInput">
+            <input type="text" class="search-input" placeholder="搜索知识胶囊..." id="searchInput">
             <button class="btn btn-primary" onclick="search()">搜索</button>
             <button class="btn btn-secondary" onclick="showAll()">全部</button>
+            <button class="btn btn-secondary" onclick="batchRegisterProvenance()">批量注册溯源</button>
         </div>
         
         <div class="section">
-            <h2>📦 最新胶囊</h2>
-            <div class="capsules" id="capsules">
-                <!-- 胶囊将动态加载 -->
-            </div>
+            <h2>最新胶囊</h2>
+            <div class="capsules" id="capsules"></div>
         </div>
         
         <div class="section">
-            <h2>🏷️ 按领域浏览</h2>
-            <div class="domains" id="domains">
-                <span class="domain-tag active" onclick="filterByDomain('')">全部</span>
-                <span class="domain-tag" onclick="filterByDomain('physics')">物理学</span>
-                <span class="domain-tag" onclick="filterByDomain('AI')">人工智能</span>
-                <span class="domain-tag" onclick="filterByDomain('climate')">气候变化</span>
-            </div>
+            <h2>按领域浏览</h2>
+            <div class="domains" id="domains"></div>
         </div>
         
         <div class="footer">
-            <p>🚀 让知识流动起来 | Built by wanyview 🧠</p>
+            <p>让知识流动起来 | Built by wanyview</p>
             <p style="margin-top: 10px; font-size: 0.85em;">
-                <a href="https://github.com/wanyview/CapsuleHub" style="color: #64ffda;">GitHub</a> | 
                 <a href="/docs" style="color: #64ffda;">API 文档</a>
+            </p>
+            <p style="margin-top: 10px; font-size: 0.8em; color: #8892b0;">
+                v0.3.0: 版本历史 | 演进追踪 | 引用计数 | 验证记录
             </p>
         </div>
     </div>
     
     <script>
         let capsules = [];
+        let provenanceData = {};
+        let currentFeaturedId = null;
         
         async function loadCapsules() {
             try {
@@ -315,10 +374,13 @@
                 const data = await response.json();
                 capsules = data.capsules || [];
                 renderCapsules(capsules);
+                updateStats();
+                loadDomains();
             } catch (e) {
-                console.log('API not available, using demo data');
                 capsules = getDemoCapsules();
                 renderCapsules(capsules);
+                updateStats();
+                loadDomains();
             }
         }
         
@@ -328,10 +390,25 @@
                 if (response.ok) {
                     const data = await response.json();
                     renderFeatured(data.capsule);
+                    currentFeaturedId = data.capsule.id;
                 }
             } catch (e) {
-                console.log('Featured capsule not available');
+                console.log('Featured not available');
             }
+        }
+        
+        async function loadProvenance(capsuleId) {
+            try {
+                const response = await fetch(`/api/v1/provenance/${capsuleId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.provenance) {
+                        provenanceData[capsuleId] = data.provenance;
+                        return data.provenance;
+                    }
+                }
+            } catch (e) {}
+            return null;
         }
         
         function renderFeatured(capsule) {
@@ -343,135 +420,189 @@
             document.getElementById('featuredTitle').textContent = capsule.title;
             document.getElementById('featuredInsight').textContent = capsule.insight;
             document.getElementById('featuredMeta').innerHTML = `
-                <span>📚 ${capsule.domain}</span>
-                <span>👥 ${capsule.authors.join(', ')}</span>
-                <span>⭐ ${capsule.overall_score}分</span>
-                ${capsule.version ? `<span>📦 v${capsule.version}</span>` : ''}
+                <span>${capsule.domain}</span>
+                <span>${capsule.authors.join(', ')}</span>
+                <span>${capsule.overall_score}分</span>
             `;
             
             document.getElementById('featuredScore').textContent = `${capsule.overall_score}/100`;
             document.getElementById('featuredScoreBar').style.width = `${capsule.overall_score}%`;
             document.getElementById('featuredScoreBar').className = `score-fill score-${capsule.overall_grade}`;
             
-            // 保存当前精选胶囊 ID
-            window.currentFeaturedId = capsule.id;
+            loadProvenance(capsule.id).then(p => renderProvenanceGrid('featuredProvenanceGrid', p, capsule));
+        }
+        
+        function renderProvenanceGrid(elementId, provenance, capsule) {
+            const container = document.getElementById(elementId);
+            if (!provenance) {
+                container.innerHTML = `
+                    <div class="provenance-item">
+                        <div class="provenance-label">状态</div>
+                        <div class="provenance-value">未注册</div>
+                    </div>
+                    <div class="provenance-item">
+                        <button class="btn btn-primary" onclick="registerProvenance('${capsule.id}')">注册溯源</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const vh = provenance.version_history || {};
+            const ct = provenance.citations || {};
+            const vl = provenance.validation || {};
+            const ev = provenance.evolution || {};
+            
+            container.innerHTML = `
+                <div class="provenance-item">
+                    <div class="provenance-label">版本</div>
+                    <div class="provenance-value">${vh.current_version || 'v1.0.0'}</div>
+                </div>
+                <div class="provenance-item">
+                    <div class="provenance-label">版本数</div>
+                    <div class="provenance-value">${vh.version_count || 0}</div>
+                </div>
+                <div class="provenance-item">
+                    <div class="provenance-label">引用</div>
+                    <div class="provenance-value">${ct.count || 0} 次</div>
+                </div>
+                <div class="provenance-item">
+                    <div class="provenance-label">验证</div>
+                    <div class="provenance-value">${vl.verified_count > 0 ? '已验证' : '待验证'}</div>
+                </div>
+                <div class="provenance-item">
+                    <div class="provenance-label">来源</div>
+                    <div class="provenance-value">${provenance.source?.type || 'manual'}</div>
+                </div>
+                <div class="provenance-item">
+                    <div class="provenance-label">子胶囊</div>
+                    <div class="provenance-value">${ev.child_ids?.length || 0} 个</div>
+                </div>
+            `;
+            
+            if (vh.versions && vh.versions.length > 0) {
+                const versionsHtml = vh.versions.slice(-5).map(v => `
+                    <div class="version-item ${v.version === vh.current_version ? 'version-current' : ''}">
+                        v${v.version} - ${v.changes || '更新'}
+                    </div>
+                `).join('');
+                container.innerHTML += `
+                    <div style="grid-column: 1/-1;">
+                        <div class="provenance-label">版本历史</div>
+                        <div class="version-timeline">${versionsHtml}</div>
+                    </div>
+                `;
+            }
         }
         
         function viewFeatured() {
-            if (window.currentFeaturedId) {
-                window.location.href = `/api/capsules/${window.currentFeaturedId}`;
-            }
+            if (currentFeaturedId) viewCapsule(currentFeaturedId);
         }
         
         async function citeFeatured() {
-            if (!window.currentFeaturedId) return;
-            
+            if (!currentFeaturedId) return;
             try {
-                const response = await fetch(`/api/capsules/${window.currentFeaturedId}/cite`, {
-                    method: 'POST'
-                });
+                const response = await fetch(`/api/capsules/${currentFeaturedId}/cite`, { method: 'POST' });
                 const data = await response.json();
                 alert(`引用成功！当前引用次数: ${data.new_count}`);
-            } catch (e) {
-                alert('引用失败');
-            }
+                loadFeatured();
+            } catch (e) { alert('引用失败'); }
+        }
+        
+        async function registerProvenance(capsuleId) {
+            const id = capsuleId || currentFeaturedId;
+            if (!id) return;
+            try {
+                const response = await fetch('/api/v1/provenance/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ capsule_id: id, source_type: 'manual', author: 'web' })
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    alert('溯源注册成功！');
+                    loadFeatured();
+                } else {
+                    alert('注册失败');
+                }
+            } catch (e) { alert('注册失败'); }
+        }
+        
+        async function batchRegisterProvenance() {
+            try {
+                const response = await fetch('/api/v1/provenance/batch/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(capsules.map(c => c.id))
+                });
+                const data = await response.json();
+                alert(`成功注册 ${data.success}/${data.total} 个溯源`);
+                loadCapsules();
+            } catch (e) { alert('批量注册失败'); }
         }
         
         function getDemoCapsules() {
             return [
-                {
-                    id: '1',
-                    title: '量子纠缠的瞬时关联',
-                    domain: 'physics',
-                    topics: ['quantum', 'entanglement'],
-                    insight: '量子纠缠展示了一种超越经典物理的瞬时关联，测量一个粒子会瞬时影响另一个纠缠粒子的状态',
-                    overall_grade: 'A',
-                    overall_score: 85,
-                    authors: ['爱因斯坦', '玻尔', '贝尔'],
-                    version: '1.0.0',
-                    source_type: 'discussion',
-                    citations: 5
-                },
-                {
-                    id: '2',
-                    title: 'Transformer 架构的自注意力机制',
-                    domain: 'AI',
-                    topics: ['transformer', 'attention'],
-                    insight: "Transformer 的自注意力机制让模型能够在处理序列时动态地关注不同位置的信息",
-                    overall_grade: 'A',
-                    overall_score: 88,
-                    authors: ['Vaswani', 'Shazeer'],
-                    version: '1.0.0',
-                    source_type: 'discussion',
-                    citations: 12
-                },
-                {
-                    id: '3',
-                    title: '气候变化对农业的多维影响',
-                    domain: 'climate',
-                    topics: ['climate-change', 'agriculture'],
-                    insight: '气候变化通过温度升高、降水模式改变和极端天气，影响全球农业生产的稳定性和产量',
-                    overall_grade: 'B',
-                    overall_score: 78,
-                    authors: ['IPCC专家组'],
-                    version: '1.0.0',
-                    source_type: 'discussion',
-                    citations: 3
-                }
+                { id: 'demo-1', title: '量子纠缠的瞬时关联', domain: 'physics', topics: ['quantum'], insight: '量子纠缠展示瞬时关联', overall_grade: 'A', overall_score: 85, authors: ['爱因斯坦'], citations: 5 },
+                { id: 'demo-2', title: 'Transformer 自注意力', domain: 'AI', topics: ['transformer'], insight: '自注意力机制', overall_grade: 'A', overall_score: 88, authors: ['Vaswani'], citations: 12 },
+                { id: 'demo-3', title: '气候变化影响农业', domain: 'climate', topics: ['climate'], insight: '气候变化影响农业', overall_grade: 'B', overall_score: 78, authors: ['IPCC'], citations: 3 }
             ];
         }
         
         function renderCapsules(data) {
             const container = document.getElementById('capsules');
             container.innerHTML = data.map(c => `
-                <div class="capsule" data-domain="${c.domain}">
+                <div class="capsule">
                     <div class="capsule-header">
                         <div class="capsule-title">${c.title}</div>
                         <span class="capsule-grade grade-${c.overall_grade}">${c.overall_grade}级</span>
                     </div>
                     <div class="capsule-meta">
-                        <span>📚 ${c.domain}</span>
-                        <span>👥 ${c.authors.join(', ')}</span>
-                        <span>⭐ ${c.overall_score.toFixed(1)}分</span>
-                        ${c.version ? `<span>📦 v${c.version}</span>` : ''}
+                        <span>${c.domain}</span>
+                        <span>${c.authors.join(', ')}</span>
+                        <span>${c.overall_score}分</span>
                     </div>
                     <div class="capsule-insight">${c.insight}</div>
-                    
-                    <!-- 溯源信息 -->
-                    <div class="provenance">
-                        <div class="provenance-title">🔗 溯源信息</div>
-                        <div class="provenance-item">
-                            <span class="provenance-label">来源:</span>
-                            <span>${c.source_type || 'manual'}</span>
+                    <div class="provenance-panel">
+                        <div class="provenance-title">溯源信息</div>
+                        <div class="provenance-grid" id="provenance-${c.id}">
+                            <div class="provenance-item">
+                                <div class="provenance-label">来源</div>
+                                <div class="provenance-value">${c.source_type || 'manual'}</div>
+                            </div>
+                            <div class="provenance-item">
+                                <div class="provenance-label">引用</div>
+                                <div class="provenance-value">${c.citations || 0} 次</div>
+                            </div>
                         </div>
-                        ${c.citations > 0 ? `
-                        <div class="provenance-item">
-                            <span class="provenance-label">引用:</span>
-                            <span>${c.citations} 次</span>
-                        </div>
-                        ` : ''}
                     </div>
-                    
                     <div class="capsule-actions">
                         <button class="btn btn-primary" onclick="viewCapsule('${c.id}')">查看详情</button>
-                        <button class="btn btn-secondary" onclick="citeCapsule('${c.id}')">📎 引用</button>
-                        <button class="btn btn-secondary">⭐ 收藏</button>
+                        <button class="btn btn-secondary" onclick="citeCapsule('${c.id}')">引用</button>
+                        <button class="btn btn-secondary" onclick="registerProvenance('${c.id}')">溯源</button>
                     </div>
                 </div>
             `).join('');
-            
             document.getElementById('capsuleCount').textContent = data.length;
-            const avg = data.reduce((a,b) => a + b.overall_score, 0) / data.length;
-            document.getElementById('avgScore').textContent = avg.toFixed(0);
+        }
+        
+        function updateStats() {
+            const totalScore = capsules.reduce((a, b) => a + b.overall_score, 0);
+            document.getElementById('avgScore').textContent = capsules.length ? (totalScore / capsules.length).toFixed(0) : 0;
+            document.getElementById('totalCitations').textContent = capsules.reduce((a, b) => a + (b.citations || 0), 0);
+            document.getElementById('provenanceCount').textContent = Object.keys(provenanceData).length;
+        }
+        
+        function loadDomains() {
+            const domains = [...new Set(capsules.map(c => c.domain))];
+            document.getElementById('domains').innerHTML = `
+                <span class="domain-tag active" onclick="filterByDomain('')">全部</span>
+                ${domains.map(d => `<span class="domain-tag" onclick="filterByDomain('${d}')">${d}</span>`).join('')}
+            `;
         }
         
         function search() {
             const q = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = capsules.filter(c => 
-                c.title.toLowerCase().includes(q) || 
-                c.insight.toLowerCase().includes(q) ||
-                c.topics.some(t => t.toLowerCase().includes(q))
-            );
+            const filtered = capsules.filter(c => c.title.toLowerCase().includes(q) || c.insight.toLowerCase().includes(q));
             renderCapsules(filtered);
         }
         
@@ -483,13 +614,8 @@
         function filterByDomain(domain) {
             document.querySelectorAll('.domain-tag').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            
-            if (!domain) {
-                renderCapsules(capsules);
-            } else {
-                const filtered = capsules.filter(c => c.domain === domain);
-                renderCapsules(filtered);
-            }
+            if (!domain) renderCapsules(capsules);
+            else renderCapsules(capsules.filter(c => c.domain === domain));
         }
         
         function viewCapsule(id) {
@@ -498,15 +624,10 @@
         
         async function citeCapsule(id) {
             try {
-                const response = await fetch(`/api/capsules/${id}/cite`, {
-                    method: 'POST'
-                });
+                const response = await fetch(`/api/capsules/${id}/cite`, { method: 'POST' });
                 const data = await response.json();
                 alert(`引用成功！当前引用次数: ${data.new_count}`);
-                loadCapsules(); // 刷新列表
-            } catch (e) {
-                alert('引用失败');
-            }
+            } catch (e) { alert('引用失败'); }
         }
         
         loadCapsules();
